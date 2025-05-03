@@ -1,9 +1,9 @@
 
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import { Icon } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { findSafeRoutes, Route, RoutePoint, getSafetyLevel } from '@/utils/routeUtils';
+import { findSafeRoutes, Route, getSafetyLevel } from '@/utils/routeUtils';
 
 // Fix for default marker icons in Leaflet with webpack
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
@@ -33,6 +33,27 @@ const endIcon = new Icon({
   popupAnchor: [1, -34],
   className: 'text-primary',
 });
+
+// Component to recenter map when route changes
+const MapRecenter = ({ route }: { route: Route | null }) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (!route) return;
+    
+    const bounds = [
+      [route.startLocation.lat, route.startLocation.lon],
+      [route.endLocation.lat, route.endLocation.lon]
+    ] as [[number, number], [number, number]];
+    
+    // Add segment points to bounds if they exist
+    if (route.segments && route.segments.length > 0) {
+      map.fitBounds(bounds);
+    }
+  }, [route, map]);
+  
+  return null;
+};
 
 interface RouteMapProps {
   selectedRouteId: string | null;
@@ -147,6 +168,8 @@ const RouteMap: React.FC<RouteMapProps> = ({ selectedRouteId }) => {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        
+        {selectedRoute && <MapRecenter route={selectedRoute} />}
         
         {/* Draw selected route */}
         {selectedRoute && (
